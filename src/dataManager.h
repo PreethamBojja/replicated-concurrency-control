@@ -22,12 +22,18 @@ private:
     map<string, vector<ValueType>> snapshots;
 
 public:
+    DataManager(int site_id);
+
     void setUp();
     bool isUp();
+    map<string, ValueType> getCurrentValues();
 
     void setVariableAccessible(string variable, bool accessible);
     bool isVariableAccessible(string variable);
 
     ValueType read(string variable);
     void commit(string variable, ValueType value, int transactionId);
+
+    void addSnapshot(string variable, ValueType value);
+    vector<ValueType> getSnapshots(string variable) const;
 };
