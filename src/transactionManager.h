@@ -34,4 +34,5 @@ public:
 
     bool checkForCycle(vector<Transaction*> committedTransactions, Transaction* txn);
     bool runAvailableCopiesCheck(Transaction* txn);
+    void dumpSystemState();
 };

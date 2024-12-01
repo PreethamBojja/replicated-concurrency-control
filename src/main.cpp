@@ -4,8 +4,11 @@
 #include <vector>
 #include <fstream>
 #include "operation.h"
+#include "transactionManager.h"
 
 using namespace std;
+
+bool printInput = false;
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -27,7 +30,8 @@ int main(int argc, char* argv[]) {
     int timestamp = 0;
     string line;
 
-    //TODO : Handle bad input scenarios and spaces
+    TransactionManager& transactionManager = TransactionManager::getInstance();
+
     while (getline(infile, line)) {
         if (line.empty()) continue;
 
@@ -43,7 +47,7 @@ int main(int argc, char* argv[]) {
             case BEGIN:
                 getline(iss, transactionName, ')');
                 transactionId = extractTransactionId(transactionName);
-                operations.emplace_back(BEGIN, transactionId, "", 0, timestamp++);
+                transactionManager.beginTransaction(transactionId, timestamp++);
                 if (printInput) cout << "Begin: T" << transactionId << endl;
                 break;
 
@@ -51,8 +55,8 @@ int main(int argc, char* argv[]) {
                 getline(iss, transactionName, ',');
                 getline(iss, var, ')');
                 transactionId = extractTransactionId(transactionName);
-                operations.emplace_back(READ, transactionId, var, 0, timestamp++);
-                if (printInput) cout << "Read: T" << transactionId << ", Variable:" << var << endl;
+                value = transactionManager.readOperation(transactionId, var, timestamp++);
+                if (printInput) cout << "Read: T" << transactionId << ", Variable: " << var << ", Value: " << value << endl;
                 break;
 
             case WRITE:
@@ -61,31 +65,31 @@ int main(int argc, char* argv[]) {
                 getline(iss, valueStr, ')');
                 value = stoi(valueStr);
                 transactionId = extractTransactionId(transactionName);
-                operations.emplace_back(WRITE, transactionId, var, value, timestamp++);
-                if (printInput) cout << "Write: T" << transactionId << ", Variable:" << var << ", Value:" << value << endl;
+                transactionManager.writeOperation(transactionId, var, value, timestamp++);
+                if (printInput) cout << "Write: T" << transactionId << ", Variable: " << var << ", Value: " << value << endl;
                 break;
 
             case END:
                 getline(iss, transactionName, ')');
                 transactionId = extractTransactionId(transactionName);
-                operations.emplace_back(END, transactionId, "", 0, timestamp++);
-                if (printInput) cout << "End: T" << transactionId << endl;
+                bool committed = transactionManager.endTransaction(transactionId, timestamp++);
+                if (printInput) cout << (committed ? "Transaction commits" : "Transaction aborts") << endl;
                 break;
 
             case FAIL:
                 getline(iss, siteId, ')');
-                operations.emplace_back(FAIL, -1, siteId, 0, timestamp++);
+                transactionManager.failSite(stoi(siteId), timestamp++);
                 if (printInput) cout << "Fail Site: " << siteId << endl;
                 break;
 
             case RECOVER:
                 getline(iss, siteId, ')');
-                operations.emplace_back(RECOVER, -1, siteId, 0, timestamp++);
+                transactionManager.recoverSite(stoi(siteId), timestamp++);
                 if (printInput) cout << "Recover Site: " << siteId << endl;
                 break;
 
             case DUMP:
-                operations.emplace_back(DUMP, -1, "", 0, timestamp++);
+                transactionManager.dumpSystemState();
                 if (printInput) cout << "Dump" << endl;
                 break;
 
