@@ -1,11 +1,21 @@
 #include "dataManager.h"
+#include "valueType.h"
 #include <stdexcept>
 #include <iostream>
 
 using namespace std;
 
-DataManager::DataManager(int site_id) : site_id(site_id), isUp(true) {}
-// TODO : Intialize variables x1,x2...x20
+DataManager::DataManager(int siteId){
+    Id = siteId;
+    isUp = true;
+    for (int i = 1; i <= 20; ++i) {
+        string key = "x" + to_string(i);
+        accessible[key] = true; 
+        int value = i * 10;               
+        values[key] = new valueType(value, 0 , 0); // Assuming transactions start with ID 1  
+        snapshots[key] = {new valueType(value, 0 , 0)};   
+    }
+}
 
 void DataManager::setDown() {
     isUp = false;
@@ -19,28 +29,28 @@ bool DataManager::isUp() const {
     return isUp;
 }
 
-void DataManager::setVariableAccessible(const string& variable, bool accessible) {
-    this->accessible[variable] = accessible;
+void DataManager::setVariableAccessible(string variable, bool accessible) {
+    accessible[variable] = accessible;
 }
 
-bool DataManager::isVariableAccessible(const string& variable) const {
+bool DataManager::isVariableAccessible(string variable) const {
     auto it = accessible.find(variable);
     return (it != accessible.end()) ? it->second : false;
 }
 
-ValueType DataManager::read(const string& variable) {
+ValueType DataManager::read(string variable) {
     // TODO
 }
 
-void DataManager::commit(const string& variable, const ValueType& value, int transaction_id) {
+void DataManager::commit(string variable, ValueType value, int transaction_id) {
     // TODO
 }
 
-void DataManager::addSnapshot(const string& variable, const ValueType& value) {
+void DataManager::addSnapshot(string variable, ValueType value) {
     snapshots[variable].push_back(value);
 }
 
-vector<ValueType> DataManager::getSnapshots(const string& variable) const {
+vector<ValueType> DataManager::getSnapshots(string variable) const {
     auto it = snapshots.find(variable);
     if (it != snapshots.end()) {
         return it->second;

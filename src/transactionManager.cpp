@@ -25,13 +25,13 @@ void TransactionManager::beginTransaction(int transactionId, int timestamp) {
     transactions[transactionId] = Transaction(transactionId, timestamp);
 }
 
-int TransactionManager::readOperation(int transactionId, string& variable, int timestamp) {
+int TransactionManager::readOperation(int transactionId, string variable, int timestamp) {
     // TODO: Implement read operation
     return -1;
 }
 
-void TransactionManager::writeOperation(int transactionId, string& variable, int value, int timestamp) {
-    // TODO: Implement write operation
+void TransactionManager::writeOperation(int transactionId, string variable, int value, int timestamp) {
+
     return
 }
 
@@ -65,7 +65,7 @@ void TransactionManager::dumpSystemState(){
     // TODO: Implement dump
 }
 
-bool TransactionManager::checkForCycle(vector<Transaction*>& committed_transactions, Transaction* txn) {
+bool TransactionManager::checkForCycle(vector<Transaction*> committed_transactions, Transaction* txn) {
     // TODO: Implement cycle detection in serialization graph
     return true;
 }
