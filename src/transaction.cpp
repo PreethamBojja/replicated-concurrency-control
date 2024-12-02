@@ -6,7 +6,7 @@
 Transaction::Transaction(int txnId, int startTime){
     this->txnId = txnId;
     this->status = TxnStatus::ACTIVE;
-    this->startTime = startTime;
+    this->start_ts = startTime;
     this->commit_ts = INT_MAX;
 }
 
@@ -36,23 +36,23 @@ void Transaction::abort(string reason) {
     reason4abort = reason;
 }
 
-// move to transaction manager ??
-bool validateReadWriteConflicts(vector<Transaction*> committedTransactions) {
-    // TODO: Implement detailed read-write conflict detection
-    // Check for consecutive RW edges in serialization graph
-    return true;
-}
+// // move to transaction manager ??
+// bool validateReadWriteConflicts(vector<Transaction*> committedTransactions) {
+//     // TODO: Implement detailed read-write conflict detection
+//     // Check for consecutive RW edges in serialization graph
+//     return true;
+// }
 
-// move this to transaction manager ??
-bool Transaction::validateAvailableCopies() {
-    // TODO
-    return true;
-}
+// // move this to transaction manager ??
+// bool Transaction::validateAvailableCopies() {
+//     // TODO
+//     return true;
+// }
 
-// move to transaction manager
-bool Transaction::hasConflictingAccess(Transaction other) const {
-    // TODO
-}
+// // move to transaction manager
+// bool Transaction::hasConflictingAccess(Transaction other) const {
+//     // TODO
+// }
 
 int Transaction::getTransactionId(){ 
     return txnId; 

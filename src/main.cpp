@@ -42,6 +42,7 @@ int main(int argc, char* argv[]) {
         OperationType type = getOperationType(command);
         string transactionName, var, valueStr, siteId;
         int transactionId = -1, value = 0;
+        bool committed;
 
         switch (type) {
             case BEGIN:
@@ -72,7 +73,7 @@ int main(int argc, char* argv[]) {
             case END:
                 getline(iss, transactionName, ')');
                 transactionId = extractTransactionId(transactionName);
-                bool committed = transactionManager.endTransaction(transactionId, timestamp++);
+                committed = transactionManager.endTransaction(transactionId, timestamp++);
                 if (printInput) cout << (committed ? "Transaction commits" : "Transaction aborts") << endl;
                 break;
 

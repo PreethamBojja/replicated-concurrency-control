@@ -32,7 +32,7 @@ public:
     void set_access_flag(string variable, bool accessible);
     bool is_accessible(string variable);
 
-    bool read(string variable, ValueType &dest);
+    bool read(string variable, int at_ts, ValueType &dest);
     void commit(string variable, ValueType value, int commit_ts);
 
     void take_snapshot(string variable);

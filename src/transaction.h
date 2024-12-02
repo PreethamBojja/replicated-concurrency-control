@@ -18,7 +18,7 @@ enum class TxnStatus {
 class Transaction {
 public:
     int txnId;
-    int startTime;
+    int start_ts;
     int commit_ts;
     TxnStatus status;
     string reason4abort;

@@ -46,21 +46,17 @@ bool DataManager::is_accessible(string variable) {
     return (it != accessible.end()) ? it->second : false;
 }
 
-bool DataManager::read(string variable, ValueType &dest) {
+bool DataManager::read(string variable, int at_ts, ValueType &dest) {
     // TODO
     if (!isUp) {
         return false;
     }
 
     ValueType val = values[variable];
-    if (is_accessible(variable)) {
-        dest.timestamp = val.getTimestamp();
-        dest.txnId = val.getTransactionId();
-        dest.value = val.getValue();
-        return true;
-    } else {
-        return false;
-    }
+    dest.timestamp = val.getTimestamp();
+    dest.txnId = val.getTransactionId();
+    dest.value = val.getValue();
+    return true;
 }
 
 void DataManager::commit(string var_id, ValueType value, int ts) {
