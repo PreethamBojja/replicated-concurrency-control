@@ -118,9 +118,24 @@ void TransactionManager::writeOperation(int txn_id, string variable, int value, 
         writes to a site s and then s fails before T commits, then T should abort
         at end(T); you need not do that for reads), because a truly distributed im-
         plementation would have local information that would disappear on failure.
-     */
-    txn->addOperation(Operation(OperationType::WRITE, txn_id, variable, value, timestamp));
-    
+    */
+    auto op = Operation(OperationType::WRITE, txn_id, variable, value, timestamp);
+    txn->addOperation(op);
+    vector<int> active_sites;
+    int var_id = stoi(variable.substr(1));
+    if (var_id % 2 == 1) {
+        DataManager *site = sites[var_id % 10 + 1];
+        if (site->is_site_up()) {
+            active_sites.push_back(1 + var_id % 10);
+        }
+    } else {
+        for (int i = 1; i < 11; i++) {
+            if (sites[i]->is_site_up()) {
+                active_sites.push_back(i);
+            }
+        }
+    }
+    txn->active_sites_for_write_op[op] = active_sites;
     return;
 }
 
@@ -133,11 +148,47 @@ bool TransactionManager::endTransaction(int transactionId, int timestamp) {
 
     // run pre-commit checks on the txn
     bool is_commitable = true;
+    for (auto it : txn->active_sites_for_write_op) {
+        int op_ts = it.first.timestamp;
+        string variable = it.first.variable;
+        for (auto site_id : it.second) {
+
+            // available copies check on writes
+            for (auto site_op : siteHistory[site_id]) {
+                if (site_op.op_type == OperationType::FAIL && site_op.timestamp > op_ts) {
+                    is_commitable = false;
+                    break;
+                }
+            }
+
+            // first-committer advantage check
+            DataManager *site = sites[site_id];
+            if (site->values[variable].timestamp > txn->start_ts) {
+                is_commitable = false;
+            }
+
+            if (!is_commitable) {
+                break;
+            }
+        }
+        if (!is_commitable) {
+            break;
+        }
+    }
     // pre-commit checks go here:
     //      1. available copies
-    //      2. SSI checks
+    //      2. first committer adv check
+    //      3. SSI checks
     if (is_commitable) {
+        for (auto it : txn->active_sites_for_write_op) {
+            string variable = it.first.variable;
+            ValueType value = ValueType(txn->currentState[variable], timestamp, transactionId);
+            for (auto site_id : it.second) {
+                sites[site_id]->commit(variable, value, timestamp);
+            }
+        }
         txn->commit(timestamp);
+
         cout << "Transaction " << transactionId << " committed" << endl;
     } else {
         txn->abort("pre-commit checks failed");

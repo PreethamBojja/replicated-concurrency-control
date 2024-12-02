@@ -29,6 +29,8 @@ public:
     // keep track of the variables written by the txn, useful at commit time
     map<string, bool> is_written;
 
+    map<Operation, vector<int> > active_sites_for_write_op;
+
     vector<Operation> pastOperations;
 
     // we dont need a currentOperation ?
