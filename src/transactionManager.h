@@ -5,6 +5,7 @@
 #include <memory>
 #include "transaction.h"
 #include "dataManager.h"
+#include "valueType.h"
 
 using namespace std;
 
@@ -15,12 +16,14 @@ private:
 
     static int currentTimestamp;
 
-    map<int, DataManager> sites;
-    map<int, Transaction> transactions;
-    map<int, Operation> siteHistory;
+    map<int, DataManager*> sites;
+    map<int, Transaction*> transactions;
+    map<int, vector<Operation> > siteHistory;
 
 public:
     static TransactionManager& getInstance();
+
+    Transaction* getTransaction(int transactionId);
 
     // Transaction lifecycle methods
     void beginTransaction(int transactionId, int timestamp);

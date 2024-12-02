@@ -8,8 +8,8 @@
 using namespace std;
 
 class DataManager {
-private:
-    static int Id;
+public:
+    int id;
     bool isUp;
 
     // Tracks if each variable is accessible
@@ -19,21 +19,22 @@ private:
     map<string, ValueType> values;
 
     // Historical snapshots of variables
-    map<string, vector<ValueType>> snapshots;
+    map<string, vector<ValueType> > snapshots;
 
-public:
+// public:
     DataManager(int site_id);
 
-    void setUp();
-    bool isUp();
+    void site_up();
+    void site_down();
+    bool is_site_up();
     map<string, ValueType> getCurrentValues();
 
-    void setVariableAccessible(string variable, bool accessible);
-    bool isVariableAccessible(string variable);
+    void set_access_flag(string variable, bool accessible);
+    bool is_accessible(string variable);
 
-    ValueType read(string variable);
-    void commit(string variable, ValueType value, int transactionId);
+    bool read(string variable, ValueType &dest);
+    void commit(string variable, ValueType value, int commit_ts);
 
-    void addSnapshot(string variable, ValueType value);
-    vector<ValueType> getSnapshots(string variable) const;
+    void take_snapshot(string variable);
+    vector<ValueType> getSnapshots(string variable);
 };

@@ -2,55 +2,78 @@
 #include "valueType.h"
 #include <stdexcept>
 #include <iostream>
+#include <string>
 
 using namespace std;
 
-DataManager::DataManager(int siteId){
-    Id = siteId;
+DataManager::DataManager(int site_id){
+    id = site_id;
     isUp = true;
-    for (int i = 1; i <= 20; ++i) {
-        string key = "x" + to_string(i);
-        accessible[key] = true; 
-        int value = i * 10;               
-        values[key] = new valueType(value, 0 , 0); // Assuming transactions start with ID 1  
-        snapshots[key] = {new valueType(value, 0 , 0)};   
+    vector<int> var_ids = {2, 4, 6, 8, 10, 12, 14, 16, 18, 20};
+    if (site_id % 2 == 0) {
+        var_ids.push_back(site_id - 1);
+        var_ids.push_back(10 + site_id - 1);
     }
+
+    for (int var_id : var_ids) {
+        string key = "x" + to_string(var_id);
+        accessible[key] = true; 
+        int value = var_id * 10;               
+        values[key] = ValueType(value, 0 , 0); // Assuming transactions start with ID 1  
+        snapshots[key].push_back(ValueType(value, 0 , 0));   
+    }
+    
 }
 
-void DataManager::setDown() {
+void DataManager::site_down() {
     isUp = false;
 }
 
-void DataManager::setUp() {
+void DataManager::site_up() {
     isUp = true;
 }
 
-bool DataManager::isUp() const {
+bool DataManager::is_site_up() {
     return isUp;
 }
 
-void DataManager::setVariableAccessible(string variable, bool accessible) {
-    accessible[variable] = accessible;
+void DataManager::set_access_flag(string variable, bool access_flag) {
+    accessible[variable] = access_flag;
 }
 
-bool DataManager::isVariableAccessible(string variable) const {
+bool DataManager::is_accessible(string variable) {
     auto it = accessible.find(variable);
     return (it != accessible.end()) ? it->second : false;
 }
 
-ValueType DataManager::read(string variable) {
+bool DataManager::read(string variable, ValueType &dest) {
     // TODO
+    if (!isUp) {
+        return false;
+    }
+
+    ValueType val = values[variable];
+    if (is_accessible(variable)) {
+        dest.timestamp = val.getTimestamp();
+        dest.txnId = val.getTransactionId();
+        dest.value = val.getValue();
+        return true;
+    } else {
+        return false;
+    }
 }
 
-void DataManager::commit(string variable, ValueType value, int transaction_id) {
+void DataManager::commit(string var_id, ValueType value, int ts) {
     // TODO
+    value.timestamp = ts;
+    values[var_id] = value;
 }
 
-void DataManager::addSnapshot(string variable, ValueType value) {
-    snapshots[variable].push_back(value);
+void DataManager::take_snapshot(string variable) {
+    snapshots[variable].push_back(values[variable]);
 }
 
-vector<ValueType> DataManager::getSnapshots(string variable) const {
+vector<ValueType> DataManager::getSnapshots(string variable) {
     auto it = snapshots.find(variable);
     if (it != snapshots.end()) {
         return it->second;
@@ -58,6 +81,6 @@ vector<ValueType> DataManager::getSnapshots(string variable) const {
     return {};
 }
 
-map<string, ValueType> DataManager::getCurrentValues() const {
-    return values;
-}
+// map<string, ValueType> DataManager::getCurrentValues() const {
+//     return values;
+// }

@@ -1,12 +1,12 @@
 #pragma once
 
 class ValueType {
-private:
+public:
     int value;
     int timestamp;
     int txnId;
 
-public:
+// public:
     ValueType() {
         value = 0;
         timestamp = 0;
