@@ -29,8 +29,20 @@ void TransactionManager::beginTransaction(int transactionId, int timestamp) {
     transactions[transactionId] = new Transaction(transactionId, timestamp);
 }
 
+/**
+Read Operation :
+
+1. Unreplicated variable :  Check if the site is up if it is up read the value from the time the transaction begun, if it’s down then queue the read operation
+ 
+2. Replicated variable :  Check if the site is valid, if it’s valid and the site is up then read the value from the time the transaction begun. If it’s valid and
+                          the site is not up then go to the next valid site that is up. If all valid sites are down then add the operation to queue.
+                          If all the sites are invalid then abort the transaction.
+
+   How to check if the site is valid or not : Check if there is any fail of that site between the last commit time before transaction start time of that variable and the transaction start time.
+*/
+
 int TransactionManager::readOperation(int transactionId, string variable, int timestamp) {
-    // TODO: Implement read operation
+    
     Transaction* txn = getTransaction(transactionId);
 
     if (txn->currentState.find(variable) != txn->currentState.end()) {
@@ -38,65 +50,54 @@ int TransactionManager::readOperation(int transactionId, string variable, int ti
     }
 
     int var_id = stoi(variable.substr(1));
-    vector<int> valid_sites = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    bool valid_site_exists = false;
+    ValueType var_instance;
+
     if (var_id % 2 == 1) {
         int site_id = 1 + var_id % 10;
-        valid_sites.clear();
-        valid_sites.push_back(site_id);
-    }
-    bool all_valid_sites_down = true;
-    for (auto site_id : valid_sites) {
         DataManager* site = sites[site_id];
-        vector<Operation> site_history = siteHistory[site_id];
-        ValueType var_instance;
-
-        site->read(variable, txn->start_ts, var_instance);
         if (site->is_site_up()) {
-            all_valid_sites_down = false;
+            var_instance = site->read(variable, txn->start_ts);
+            int val = var_instance.getValue();
+            txn->addOperation(Operation(OperationType::READ, transactionId, variable, val, timestamp));
+            txn->var_access_map[variable] = make_pair(site_id, var_instance);
+            txn->currentState[variable] = val;
+            return val;
+        }
+    } else {
+        vector<int> valid_sites = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+        for (auto site_id : valid_sites) {
+            DataManager* site = sites[site_id];
+            vector<Operation> site_history = siteHistory[site_id];
 
-            int var_last_commit = var_instance.getTimestamp();
-            int is_site_valid_for_read = true;
+            bool is_site_valid_for_read = true;
+            var_instance = site->read(variable, txn->start_ts);
+            int var_last_commit_before_ts_start = var_instance.getTimestamp();
             for (auto it = site_history.rbegin(); it != site_history.rend(); it++) {
-                if (it->timestamp >= var_last_commit && it->timestamp <= txn->start_ts && it->op_type == OperationType::FAIL) {
+                if (it->timestamp >= var_last_commit_before_ts_start && it->timestamp <= txn->start_ts && it->op_type == OperationType::FAIL) {
                     is_site_valid_for_read = false;
                     break;
                 }
             }
 
             if (is_site_valid_for_read) {
+                valid_site_exists = true;
+            }
+
+            if (is_site_valid_for_read && site->is_site_up()) {
                 int val = var_instance.getValue();
                 txn->addOperation(Operation(OperationType::READ, transactionId, variable, val, timestamp));
-
-                // record the first access of "varible" by the transaction "transactionId"
-                // used to build the dependency graph for SSI
-                // maybe useful for Available Copies checks
-                // can maintian and update a running SSI graph 
                 txn->var_access_map[variable] = make_pair(site_id, var_instance);
-
-                // update current state
                 txn->currentState[variable] = val;
-
                 return val;
             }
         }
     }
 
-    // decide when to queue to op vs when to abort the transaction
-    // if no valid site is up, queue the operation
-    // from the project doc:
-    /**
-        if the transaction manager TM requests a read on a replicated data item
-        x for read-write transaction T and cannot get it due to failure, the TM
-        should try another site (all in the same step). If no relevant site is available,
-        then T must wait. Note that T must have access to the version of x that
-        was the last to commit before T began. (As mentioned above, if every site
-        failed after a commit to x but before T began, then T should abort and will
-        never reach an end(T).)
-     */
-    if (all_valid_sites_down) {
-        txn->queueOperation(Operation(OperationType::READ, transactionId, variable, 0, timestamp));
-    } else {
+    if (!valid_site_exists) {
         txn->abort("no valid site for read " + variable);
+    } else {
+        txn->queueOperation(Operation(OperationType::READ, transactionId, variable, 0, timestamp));
     }
 
     return -1;
