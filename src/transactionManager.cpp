@@ -49,15 +49,15 @@ int TransactionManager::readOperation(int transactionId, string variable, int ti
         DataManager* site = sites[site_id];
         vector<Operation> site_history = siteHistory[site_id];
         ValueType var_instance;
-        bool flag = site->read(variable, var_instance);
 
-        if (flag) {
+        site->read(variable, txn->start_ts, var_instance);
+        if (site->is_site_up()) {
             all_valid_sites_down = false;
 
             int var_last_commit = var_instance.getTimestamp();
             int is_site_valid_for_read = true;
             for (auto it = site_history.rbegin(); it != site_history.rend(); it++) {
-                if (it->timestamp >= var_last_commit && it->op_type == OperationType::FAIL) {
+                if (it->timestamp >= var_last_commit && it->timestamp <= txn->start_ts && it->op_type == OperationType::FAIL) {
                     is_site_valid_for_read = false;
                     break;
                 }
@@ -96,7 +96,7 @@ int TransactionManager::readOperation(int transactionId, string variable, int ti
     if (all_valid_sites_down) {
         txn->queueOperation(Operation(OperationType::READ, transactionId, variable, 0, timestamp));
     } else {
-        txn->abort("no valid site");
+        txn->abort("no valid site for read " + variable);
     }
 
     return -1;
@@ -131,7 +131,7 @@ bool TransactionManager::endTransaction(int transactionId, int timestamp) {
     }
 
     // run pre-commit checks on the txn
-    bool is_commitable = false;
+    bool is_commitable = true;
     // pre-commit checks go here:
     //      1. available copies
     //      2. SSI checks
