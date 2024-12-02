@@ -5,45 +5,57 @@
 #include <map>
 #include <string>
 #include "dataManager.h"
+#include "operation.h"
 
 using namespace std;
 
+enum class TxnStatus {
+    ACTIVE,
+    COMMITTED,
+    ABORTED
+};
+
 class Transaction {
-private:
+public:
     int txnId;
     int startTime;
-    int endTime;
-    State state;
+    int commit_ts;
+    TxnStatus status;
     string reason4abort;
 
+    // to maintain the first access details of each variable
+    // used for SSI and Available Copies checks
+    map<string, pair<int, ValueType> > var_access_map;
+    // keep track of the variables written by the txn, useful at commit time
+    map<string, bool> is_written;
+
     vector<Operation> pastOperations;
-    Operation* currentOperation;
-    queue<Operation*> queuedOperations;
+
+    // we dont need a currentOperation ?
+    // last performed operation is the last item in the pastOperations vector
+    // Operation currentOperation;
+    
+    queue<Operation> queuedOperations;
 
     // Track transaction state and access
     map<string, int> currentState;
-    map<Operation*, DataManager> accessMap;
-    
-public:
-    // Transaction states
-    enum class State {
-        ACTIVE,
-        COMMITTED,
-        ABORTED
-    };
 
+    // put accessMap in Transaction Manager??
+    // map<Operation*, DataManager> accessMap;
+    
+// public:
     // Constructor
     Transaction(int txnId, int startTime);
 
     // Core transaction operations
     void addOperation(Operation op);
     void queueOperation(Operation op);
-    bool commit(int timestamp);
+    void commit(int timestamp);
     void abort(string reason);
 
     // Getters
     int getTransactionId();
-    State getState();
+    TxnStatus getStatus();
     string getAbortReason();
     vector<Operation> getPastOperations();
 };

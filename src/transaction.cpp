@@ -1,49 +1,55 @@
 #include "transaction.h"
+#include "operation.h"
 #include <iostream>
 #include <algorithm>
 
 Transaction::Transaction(int txnId, int startTime){
     this->txnId = txnId;
-    this->state = State::ACTIVE;
-    this->currentOperation = nullptr;
+    this->status = TxnStatus::ACTIVE;
     this->startTime = startTime;
-    this->endTime = INT_MAX;
+    this->commit_ts = INT_MAX;
 }
 
 void Transaction::addOperation(Operation op) {
    // TODO
+   pastOperations.push_back(op);
 }
 
 void Transaction::queueOperation(Operation op) {
     // TODO
+    queuedOperations.push(op);
 }
 
-bool Transaction::commit(int timestamp) {
+void Transaction::commit(int timestamp) {
     // TODO: Implement commit
-    return true;
+
+    // do we need the accessMap during txn commit ??
+    // are we writing replicated variables to all avaliable copies or just the copy we read it from ?
+    // should the transaction manager handle routing write operations during commit time, since we are only simulation the logic ?
+    status = TxnStatus::COMMITTED;
+    commit_ts = timestamp;
 }
 
 void Transaction::abort(string reason) {
     // TODO
-    state = State::ABORTED;
+    status = TxnStatus::ABORTED;
     reason4abort = reason;
 }
 
-bool Transaction::validateReadWriteConflicts(vector<Transaction*> committedTransactions) {
+// move to transaction manager ??
+bool validateReadWriteConflicts(vector<Transaction*> committedTransactions) {
     // TODO: Implement detailed read-write conflict detection
     // Check for consecutive RW edges in serialization graph
     return true;
 }
 
+// move this to transaction manager ??
 bool Transaction::validateAvailableCopies() {
     // TODO
     return true;
 }
 
-void Transaction::recordAccess(Operation op, DataManager dataManager) {
-    // TOD0
-}
-
+// move to transaction manager
 bool Transaction::hasConflictingAccess(Transaction other) const {
     // TODO
 }
@@ -51,8 +57,8 @@ bool Transaction::hasConflictingAccess(Transaction other) const {
 int Transaction::getTransactionId(){ 
     return txnId; 
 }
-Transaction::State Transaction::getState(){ 
-    return state; 
+TxnStatus Transaction::getStatus(){ 
+    return status; 
 }
 string Transaction::getAbortReason(){ 
     return reason4abort;
