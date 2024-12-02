@@ -8,6 +8,9 @@ Transaction::Transaction(int txnId, int startTime){
     this->status = TxnStatus::ACTIVE;
     this->start_ts = startTime;
     this->commit_ts = INT_MAX;
+
+    this->is_read.clear();
+    this->is_written.clear();
 }
 
 void Transaction::addOperation(Operation op) {

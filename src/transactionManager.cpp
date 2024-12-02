@@ -60,6 +60,7 @@ int TransactionManager::readOperation(int transactionId, string variable, int ti
             var_instance = site->read(variable, txn->start_ts);
             int val = var_instance.getValue();
             txn->addOperation(Operation(OperationType::READ, transactionId, variable, val, timestamp));
+            txn->is_read[variable] = true;
             txn->var_access_map[variable] = make_pair(site_id, var_instance);
             txn->currentState[variable] = val;
             return val;
@@ -86,14 +87,16 @@ int TransactionManager::readOperation(int transactionId, string variable, int ti
 
             if (is_site_valid_for_read && site->is_site_up()) {
                 int val = var_instance.getValue();
+                txn->is_read[variable] = true;
                 txn->addOperation(Operation(OperationType::READ, transactionId, variable, val, timestamp));
                 txn->var_access_map[variable] = make_pair(site_id, var_instance);
                 txn->currentState[variable] = val;
+                // cout << "Read op successful: " << transactionId << " " << variable << " at time " << timestamp << endl;
                 return val;
             }
         }
     }
-
+    // cout << "read operation failed: " << transactionId << " " << variable << " at time " << timestamp << endl;
     if (!valid_site_exists) {
         txn->abort("no valid site for read " + variable);
     } else {
@@ -175,6 +178,10 @@ bool TransactionManager::endTransaction(int transactionId, int timestamp) {
             break;
         }
     }
+
+    if (is_commitable) {
+        is_commitable = !checkForCycle(committed_txns, txn);
+    }
     // pre-commit checks go here:
     //      1. available copies
     //      2. first committer adv check
@@ -188,6 +195,7 @@ bool TransactionManager::endTransaction(int transactionId, int timestamp) {
             }
         }
         txn->commit(timestamp);
+        committed_txns.push_back(txn);
 
         cout << "Transaction " << transactionId << " committed" << endl;
     } else {
@@ -244,9 +252,126 @@ void TransactionManager::dumpSystemState(){
     }
 }
 
-bool TransactionManager::checkForCycle(vector<Transaction*> committed_transactions, Transaction* txn) {
+void dfs(map<int, vector<pair<int, string> > > &adj_list, map<int, bool> visited, vector<vector<string> > &cycles, int curr, vector<string> path) {
+    if (visited[curr]) {
+        cycles.push_back(path);
+        return;
+    }
+    visited[curr] = true;
+
+    for (auto nxt_node : adj_list[curr]) {
+        path.push_back(nxt_node.second);
+        dfs(adj_list, visited, cycles, nxt_node.first, path);
+        path.pop_back();
+    }
+}
+
+bool TransactionManager::checkForCycle(vector<Transaction*> c_txns, Transaction* txn) {
     // TODO: Implement cycle detection in serialization graph
-    return true;
+
+    vector<Transaction*> all_txns = c_txns;
+    all_txns.push_back(txn);
+
+    map<int, vector<pair<int, string> > > adj_list;
+    for (auto txn : all_txns) {
+        adj_list[txn->txnId] = {};
+        /** code to print out the adj list
+            cout << "txn: " << txn->txnId << endl;
+            cout << "start_ts: " << txn->start_ts << ", commit_ts: " << txn->commit_ts << endl;
+            cout << "write_set: ";
+            for (auto it : txn->is_written) {
+                if (it.second) cout << it.first << ", ";
+            } cout << endl;
+            cout << "read_set: ";
+            for (auto it : txn->is_read) {
+                if (it.second) cout << it.first << ", ";
+            } cout << endl;
+            cout << " -------------- " << endl;
+        */
+    }
+    for (int idx_i = 0; idx_i < all_txns.size(); idx_i++) {
+        for (int idx_j = idx_i + 1; idx_j < all_txns.size(); idx_j++) {
+            Transaction *txn_i = all_txns[idx_i];
+            Transaction *txn_j = all_txns[idx_j];
+
+            if (txn_i->start_ts > txn_j->start_ts) {
+                swap(txn_i, txn_j);
+            }
+
+            /**
+                Upon end(T'),
+                add T --ww--> T' to the serialization graph if T commits before T'
+                begins, and they both write to x.
+
+                Upon end(T'), add  
+                T --wr-->T' to the serialization graph if T writes to x,
+                commits before T' begins, and T' reads from x.
+             */
+            if (txn_i->commit_ts < txn_j->start_ts) {
+                for (int i = 1; i < 21; i++) {
+                    string var = "x" + to_string(i);
+                    if (txn_i->is_written[var] && txn_j->is_written[var]) {
+                        adj_list[txn_i->txnId].push_back(make_pair(txn_j->txnId, "ww"));
+                    }
+
+                    if (txn_i->is_written[var] && txn_j->is_read[var]) {
+                        adj_list[txn_i->txnId].push_back(make_pair(txn_j->txnId, "wr"));
+                    }
+                }
+            }
+
+            /**
+                Upon end(T') 
+                add
+                T --rw --> T' to the serialization graph if T reads from x, T' writes to
+                x, and T begins before end(T').
+             */
+
+            for (int i = 1; i < 21; i++) {
+                string var = "x" + to_string(i);
+                if (txn_i->is_read[var] && txn_j->is_written[var]) {
+                    adj_list[txn_i->txnId].push_back(make_pair(txn_j->txnId, "rw"));
+                }
+
+                if (txn_j->start_ts < txn_i->commit_ts) {
+                    if (txn_j->is_read[var] && txn_i->is_written[var]) {
+                        adj_list[txn_j->txnId].push_back(make_pair(txn_i->txnId, "rw"));
+                    }
+                }
+            }
+        }
+    }
+
+    // for (auto it : adj_list) {
+    //     cout << it.first << ": ";
+    //     for (auto node : it.second) {
+    //         cout << node.first << ", ";
+    //     } cout << endl;
+    // }
+    // cout << endl;
+
+    // check for a cycle with adjacent "rw" edges
+    map<int, bool> visited;
+    vector<vector<string> > cycles;
+    vector<string> path;
+
+    // collect all cycles
+    for (auto txn : all_txns) {
+        dfs(adj_list, visited, cycles, txn->txnId, path);
+    }
+
+    for (auto cycle : cycles) {
+        for (int idx = 0; idx < cycle.size() - 1; idx++) {
+            if (cycle[idx] == "rw" && cycle[idx + 1] == "rw") {
+                return true;
+            }
+        }
+        if (cycle[0] == "rw" && cycle[cycle.size() - 1] == "rw") {
+            return true;
+        }
+    }
+ 
+    return false;
 }
 
 bool TransactionManager::runAvailableCopiesCheck(Transaction* txn) {

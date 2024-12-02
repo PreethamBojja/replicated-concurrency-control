@@ -28,6 +28,8 @@ public:
     map<string, pair<int, ValueType> > var_access_map;
     // keep track of the variables written by the txn, useful at commit time
     map<string, bool> is_written;
+    // keep track of the variables read by the txn, useful for SSI pre-commit checks
+    map<string, bool> is_read;
 
     map<Operation, vector<int> > active_sites_for_write_op;
 

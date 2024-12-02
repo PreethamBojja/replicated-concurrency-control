@@ -20,6 +20,8 @@ private:
     map<int, Transaction*> transactions;
     map<int, vector<Operation> > siteHistory;
 
+    vector<Transaction*> committed_txns;
+
 public:
     static TransactionManager& getInstance();
 
