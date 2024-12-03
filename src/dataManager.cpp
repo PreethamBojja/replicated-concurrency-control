@@ -61,8 +61,8 @@ ValueType DataManager::read(string variable, int at_ts) {
 void DataManager::commit(string var, ValueType value, int ts) {
     // TODO
     value.timestamp = ts;
-    take_snapshot(var);
     values[var] = value;
+    take_snapshot(var);
 }
 
 void DataManager::take_snapshot(string variable) {

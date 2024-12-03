@@ -201,17 +201,20 @@ bool TransactionManager::endTransaction(int transactionId, int timestamp) {
         for (auto it : txn->active_sites_for_write_op) {
             string variable = it.first.variable;
             ValueType value = ValueType(txn->currentState[variable], timestamp, transactionId);
+            cout << variable << "," << value.value << " from T" << transactionId << " is written to sites ";
             for (auto site_id : it.second) {
                 sites[site_id]->commit(variable, value, timestamp);
+                cout << site_id << " ";
             }
+            cout << endl;
         }
         txn->commit(timestamp);
         committed_txns.push_back(txn);
 
-        cout << "Transaction : T" << transactionId << " committed" << endl;
+        cout << "----- T" << transactionId << " committed" << endl;
     } else {
         txn->abort("pre-commit checks failed");
-        cout << "Transaction : T" << transactionId << " aborted: " << txn->getAbortReason() << endl;
+        cout << "----- T" << transactionId << " aborted: " << txn->getAbortReason() << endl;
     }
 
     return is_commitable;
