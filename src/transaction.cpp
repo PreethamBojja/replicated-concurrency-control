@@ -11,6 +11,7 @@ Transaction::Transaction(int txnId, int startTime){
 
     this->is_read.clear();
     this->is_written.clear();
+    this->waiting_operation = nullptr;
 }
 
 void Transaction::addOperation(Operation op) {
@@ -18,9 +19,9 @@ void Transaction::addOperation(Operation op) {
    pastOperations.push_back(op);
 }
 
-void Transaction::queueOperation(Operation op) {
+void Transaction::setWaitingOperation(Operation* op) {
     // TODO
-    queuedOperations.push(op);
+    this->waiting_operation = op;
 }
 
 void Transaction::commit(int timestamp) {

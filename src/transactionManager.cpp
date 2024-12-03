@@ -100,7 +100,7 @@ int TransactionManager::readOperation(int transactionId, string variable, int ti
     if (!valid_site_exists) {
         txn->abort("no valid site for read " + variable);
     } else {
-        txn->queueOperation(Operation(OperationType::READ, transactionId, variable, 0, timestamp));
+        txn->setWaitingOperation( new Operation(OperationType::READ, transactionId, variable, 0, timestamp));
     }
 
     return -1;
@@ -229,6 +229,49 @@ void TransactionManager::recoverSite(int site_id, int timestamp){
             site->accessible[var] = true;
         }
     }
+
+    // Check and execute operations that are waiting for the recovery of this site
+    for(auto it = transactions.begin(); it != transactions.end(); it++) {
+        Transaction* txn = it->second;
+        Operation* queuedOperation = txn->waiting_operation;
+        if(txn->status == TxnStatus::ACTIVE && queuedOperation){
+            string waiting_variable = queuedOperation->variable;
+            //Check if the waiting transaction is waiting for this site
+            if(queuedOperation->op_type == OperationType::WRITE){
+                // Only unreplicated variabes have waits for writes
+                int waiting_for_site = 1 + (stoi(waiting_variable.substr(1))%10);
+                
+                if(waiting_for_site == site_id) {
+                    waiting_operations.push_back(queuedOperation);
+                    txn->setWaitingOperation(nullptr);
+                }   
+            } else if(queuedOperation->op_type == OperationType::READ) {
+                if(stoi(waiting_variable.substr(1))%2 == 1) {
+                    waiting_operations.push_back(queuedOperation);
+                    txn->setWaitingOperation(nullptr);
+                } else {
+                    // Check if this is valid site for read
+                    DataManager* site = sites[site_id];
+                    vector<Operation> site_history = siteHistory[site_id];
+
+                    ValueType var_instance = site->read(waiting_variable, txn->start_ts);
+                    int var_last_commit_before_ts_start = var_instance.getTimestamp();
+                    for (auto it = site_history.rbegin(); it != site_history.rend(); it++) {
+                        if (it->timestamp >= var_last_commit_before_ts_start && it->timestamp <= txn->start_ts && it->op_type == OperationType::FAIL) {
+                            continue;
+                        }
+                    }
+                    waiting_operations.push_back(queuedOperation);
+                    txn->setWaitingOperation(nullptr);
+                }
+            }
+        }
+    }
+    // Sort the waiting_operations based on their timestamp
+    sort(waiting_operations.begin(), waiting_operations.end(), [](Operation* a, Operation* b) {
+        return a->timestamp < b->timestamp;
+    });
+
 }
 
 void TransactionManager::dumpSystemState(){

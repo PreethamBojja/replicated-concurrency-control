@@ -35,7 +35,31 @@ int main(int argc, char* argv[]) {
     while (getline(infile, line)) {
         if (line.empty()) continue;
 
-        istringstream iss(line);
+        // Get the list of waiting operations
+        vector<Operation*> waiting_operations = transactionManager.waiting_operations;
+
+        // Process the waiting operations if the list is not empty
+        if (!waiting_operations.empty()) {
+            for (Operation* current_operation : waiting_operations) {
+                if (current_operation->op_type == OperationType::READ) {
+                    // cout << "Executing operation : T" << current_operation->transactionId << " read on " << current_operation->variable << endl;
+                    int value = transactionManager.readOperation(current_operation->transactionId, current_operation->variable, timestamp++);
+                } else {
+                    // cout << "Executing operation : T" << current_operation->transactionId << " write on " << current_operation->variable << endl;
+                    transactionManager.writeOperation(current_operation->transactionId, current_operation->variable, current_operation->value, timestamp++);
+                }
+            }
+            // Clear the waiting operations
+            transactionManager.waiting_operations.clear();
+        }
+
+        tring formattedLine;
+        for (char c : line) {
+            if (c != ' ') {
+                formattedLine += c;
+            }
+        }
+        istringstream iss(formattedLine);
         string command;
 
         getline(iss, command, '(');

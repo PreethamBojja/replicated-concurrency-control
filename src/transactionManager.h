@@ -10,7 +10,7 @@
 using namespace std;
 
 class TransactionManager {
-private:
+public:
     //Singleton
     TransactionManager();
 
@@ -21,8 +21,9 @@ private:
     map<int, vector<Operation> > siteHistory;
 
     vector<Transaction*> committed_txns;
+    vector<Operation*> waiting_operations;
 
-public:
+// public:
     static TransactionManager& getInstance();
 
     Transaction* getTransaction(int transactionId);

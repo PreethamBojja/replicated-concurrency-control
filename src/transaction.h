@@ -39,7 +39,7 @@ public:
     // last performed operation is the last item in the pastOperations vector
     // Operation currentOperation;
     
-    queue<Operation> queuedOperations;
+    Operation* waiting_operation;
 
     // Track transaction state and access
     map<string, int> currentState;
@@ -53,7 +53,7 @@ public:
 
     // Core transaction operations
     void addOperation(Operation op);
-    void queueOperation(Operation op);
+    void setWaitingOperation(Operation* op);
     void commit(int timestamp);
     void abort(string reason);
 
