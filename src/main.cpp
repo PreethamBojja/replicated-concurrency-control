@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
             transactionManager.waiting_operations.clear();
         }
 
-        tring formattedLine;
+        string formattedLine;
         for (char c : line) {
             if (c != ' ') {
                 formattedLine += c;

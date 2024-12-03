@@ -63,6 +63,7 @@ int TransactionManager::readOperation(int transactionId, string variable, int ti
             txn->is_read[variable] = true;
             txn->var_access_map[variable] = make_pair(site_id, var_instance);
             txn->currentState[variable] = val;
+            cout << variable << " of T" << transactionId << " reads " << val << endl;
             return val;
         }
     } else {
@@ -91,7 +92,7 @@ int TransactionManager::readOperation(int transactionId, string variable, int ti
                 txn->addOperation(Operation(OperationType::READ, transactionId, variable, val, timestamp));
                 txn->var_access_map[variable] = make_pair(site_id, var_instance);
                 txn->currentState[variable] = val;
-                // cout << "Read op successful: " << transactionId << " " << variable << " at time " << timestamp << endl;
+                cout << variable << " of T" << transactionId << " reads " << val << endl;
                 return val;
             }
         }
@@ -101,6 +102,7 @@ int TransactionManager::readOperation(int transactionId, string variable, int ti
         txn->abort("no valid site for read " + variable);
     } else {
         txn->setWaitingOperation( new Operation(OperationType::READ, transactionId, variable, 0, timestamp));
+        cout << variable << " of T" << transactionId << " waits" << endl;
     }
 
     return -1;
@@ -110,6 +112,15 @@ void TransactionManager::writeOperation(int txn_id, string variable, int value, 
     // just update the value in the txns local state
     // write to all valid sites at commit time!
     Transaction* txn = getTransaction(txn_id);
+    if(stoi(variable.substr(1))%2 == 1) {
+        int site_id = 1 + (stoi(variable.substr(1))%10);
+        DataManager* site = sites[site_id];
+        if(!site->is_site_up()){
+            txn->setWaitingOperation( new Operation(OperationType::WRITE, txn_id, variable, value, timestamp));
+            cout << variable << " of T" << txn_id << " waits" << endl;
+            return;
+        }
+    }
     txn->currentState[variable] = value;
     txn->is_written[variable] = true;
 
@@ -197,10 +208,10 @@ bool TransactionManager::endTransaction(int transactionId, int timestamp) {
         txn->commit(timestamp);
         committed_txns.push_back(txn);
 
-        cout << "Transaction " << transactionId << " committed" << endl;
+        cout << "Transaction : T" << transactionId << " committed" << endl;
     } else {
         txn->abort("pre-commit checks failed");
-        cout << "Transaction " << transactionId << " aborted: " << txn->getAbortReason() << endl;
+        cout << "Transaction : T" << transactionId << " aborted: " << txn->getAbortReason() << endl;
     }
 
     return is_commitable;
