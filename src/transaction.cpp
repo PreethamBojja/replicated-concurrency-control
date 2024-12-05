@@ -14,12 +14,12 @@ Transaction::Transaction(int txnId, int startTime){
     this->waiting_operation = nullptr;
 }
 
-void Transaction::addOperation(Operation op) {
+void Transaction::add_operation(Operation op) {
    // TODO
-   pastOperations.push_back(op);
+   past_operations.push_back(op);
 }
 
-void Transaction::setWaitingOperation(Operation* op) {
+void Transaction::set_waiting_operation(Operation* op) {
     // TODO
     this->waiting_operation = op;
 }
@@ -37,36 +37,5 @@ void Transaction::commit(int timestamp) {
 void Transaction::abort(string reason) {
     // TODO
     status = TxnStatus::ABORTED;
-    reason4abort = reason;
-}
-
-// // move to transaction manager ??
-// bool validateReadWriteConflicts(vector<Transaction*> committedTransactions) {
-//     // TODO: Implement detailed read-write conflict detection
-//     // Check for consecutive RW edges in serialization graph
-//     return true;
-// }
-
-// // move this to transaction manager ??
-// bool Transaction::validateAvailableCopies() {
-//     // TODO
-//     return true;
-// }
-
-// // move to transaction manager
-// bool Transaction::hasConflictingAccess(Transaction other) const {
-//     // TODO
-// }
-
-int Transaction::getTransactionId(){ 
-    return txnId; 
-}
-TxnStatus Transaction::getStatus(){ 
-    return status; 
-}
-string Transaction::getAbortReason(){ 
-    return reason4abort;
-}
-vector<Operation> Transaction::getPastOperations(){
-    return pastOperations;
+    reason_4_abort = reason;
 }

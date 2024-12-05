@@ -25,25 +25,8 @@ DataManager::DataManager(int site_id){
     
 }
 
-void DataManager::site_down() {
-    isUp = false;
-}
-
-void DataManager::site_up() {
-    isUp = true;
-}
-
 bool DataManager::is_site_up() {
     return isUp;
-}
-
-void DataManager::set_access_flag(string variable, bool access_flag) {
-    accessible[variable] = access_flag;
-}
-
-bool DataManager::is_accessible(string variable) {
-    auto it = accessible.find(variable);
-    return (it != accessible.end()) ? it->second : false;
 }
 
 ValueType DataManager::read(string variable, int at_ts) {
@@ -59,7 +42,6 @@ ValueType DataManager::read(string variable, int at_ts) {
 }
 
 void DataManager::commit(string var, ValueType value, int ts) {
-    // TODO
     value.timestamp = ts;
     values[var] = value;
     take_snapshot(var);
@@ -69,14 +51,3 @@ void DataManager::take_snapshot(string variable) {
     snapshots[variable].push_back(values[variable]);
 }
 
-vector<ValueType> DataManager::getSnapshots(string variable) {
-    auto it = snapshots.find(variable);
-    if (it != snapshots.end()) {
-        return it->second;
-    }
-    return {};
-}
-
-// map<string, ValueType> DataManager::getCurrentValues() const {
-//     return values;
-// }

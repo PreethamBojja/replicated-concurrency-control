@@ -7,7 +7,7 @@
 using namespace std;
 
 // Function to map command strings to OperationType enums
-OperationType getOperationType(const string& command) {
+OperationType get_operation_type(const string& command) {
     if (command == "begin") return BEGIN;
     if (command == "end") return END;
     if (command == "R") return READ;
@@ -20,7 +20,7 @@ OperationType getOperationType(const string& command) {
 
 // Function to extract transaction ID from string
 // TODO :  Handle corner cases
-int extractTransactionId(const string& txIdStr) {
+int extract_transaction_id(const string& txIdStr) {
     if (txIdStr.size() > 1 && txIdStr[0] == 'T') {
         try {
             return stoi(txIdStr.substr(1)); 

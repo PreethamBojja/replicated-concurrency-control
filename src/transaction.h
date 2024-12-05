@@ -21,7 +21,7 @@ public:
     int start_ts;
     int commit_ts;
     TxnStatus status;
-    string reason4abort;
+    string reason_4_abort;
 
     // to maintain the first access details of each variable
     // used for SSI and Available Copies checks
@@ -33,33 +33,22 @@ public:
 
     map<Operation, vector<int> > active_sites_for_write_op;
 
-    vector<Operation> pastOperations;
-
-    // we dont need a currentOperation ?
-    // last performed operation is the last item in the pastOperations vector
-    // Operation currentOperation;
+    vector<Operation> past_operations;
     
     Operation* waiting_operation;
 
     // Track transaction state and access
-    map<string, int> currentState;
+    map<string, int> current_state;
 
     // put accessMap in Transaction Manager??
     // map<Operation*, DataManager> accessMap;
     
-// public:
-    // Constructor
     Transaction(int txnId, int startTime);
 
     // Core transaction operations
-    void addOperation(Operation op);
-    void setWaitingOperation(Operation* op);
+    void add_operation(Operation op);
+    void set_waiting_operation(Operation* op);
     void commit(int timestamp);
     void abort(string reason);
 
-    // Getters
-    int getTransactionId();
-    TxnStatus getStatus();
-    string getAbortReason();
-    vector<Operation> getPastOperations();
 };

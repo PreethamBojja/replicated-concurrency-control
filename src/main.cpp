@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
     int timestamp = 0;
     string line;
 
-    TransactionManager& transactionManager = TransactionManager::getInstance();
+    TransactionManager& transactionManager = TransactionManager::get_instance();
 
     while (getline(infile, line)) {
         if (line.empty()) continue;
@@ -43,10 +43,10 @@ int main(int argc, char* argv[]) {
             for (Operation* current_operation : waiting_operations) {
                 if (current_operation->op_type == OperationType::READ) {
                     // cout << "Executing operation : T" << current_operation->transactionId << " read on " << current_operation->variable << endl;
-                    int value = transactionManager.readOperation(current_operation->transactionId, current_operation->variable, timestamp++);
+                    int value = transactionManager.read_operation(current_operation->transactionId, current_operation->variable, timestamp++);
                 } else {
                     // cout << "Executing operation : T" << current_operation->transactionId << " write on " << current_operation->variable << endl;
-                    transactionManager.writeOperation(current_operation->transactionId, current_operation->variable, current_operation->value, timestamp++);
+                    transactionManager.write_operation(current_operation->transactionId, current_operation->variable, current_operation->value, timestamp++);
                 }
             }
             // Clear the waiting operations
@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
         string command;
 
         getline(iss, command, '(');
-        OperationType type = getOperationType(command);
+        OperationType type = get_operation_type(command);
         string transactionName, var, valueStr, siteId;
         int transactionId = -1, value = 0;
         bool committed;
@@ -71,16 +71,16 @@ int main(int argc, char* argv[]) {
         switch (type) {
             case BEGIN:
                 getline(iss, transactionName, ')');
-                transactionId = extractTransactionId(transactionName);
-                transactionManager.beginTransaction(transactionId, timestamp++);
+                transactionId = extract_transaction_id(transactionName);
+                transactionManager.begin_transaction(transactionId, timestamp++);
                 if (printInput) cout << "Begin: T" << transactionId << endl;
                 break;
 
             case READ:
                 getline(iss, transactionName, ',');
                 getline(iss, var, ')');
-                transactionId = extractTransactionId(transactionName);
-                value = transactionManager.readOperation(transactionId, var, timestamp++);
+                transactionId = extract_transaction_id(transactionName);
+                value = transactionManager.read_operation(transactionId, var, timestamp++);
                 if (printInput) cout << "Read: T" << transactionId << ", Variable: " << var << ", Value: " << value << endl;
                 break;
 
@@ -89,32 +89,32 @@ int main(int argc, char* argv[]) {
                 getline(iss, var, ',');
                 getline(iss, valueStr, ')');
                 value = stoi(valueStr);
-                transactionId = extractTransactionId(transactionName);
-                transactionManager.writeOperation(transactionId, var, value, timestamp++);
+                transactionId = extract_transaction_id(transactionName);
+                transactionManager.write_operation(transactionId, var, value, timestamp++);
                 if (printInput) cout << "Write: T" << transactionId << ", Variable: " << var << ", Value: " << value << endl;
                 break;
 
             case END:
                 getline(iss, transactionName, ')');
-                transactionId = extractTransactionId(transactionName);
-                committed = transactionManager.endTransaction(transactionId, timestamp++);
+                transactionId = extract_transaction_id(transactionName);
+                committed = transactionManager.end_transaction(transactionId, timestamp++);
                 if (printInput) cout << (committed ? "Transaction commits" : "Transaction aborts") << endl;
                 break;
 
             case FAIL:
                 getline(iss, siteId, ')');
-                transactionManager.failSite(stoi(siteId), timestamp++);
+                transactionManager.fail_site(stoi(siteId), timestamp++);
                 if (printInput) cout << "Fail Site: " << siteId << endl;
                 break;
 
             case RECOVER:
                 getline(iss, siteId, ')');
-                transactionManager.recoverSite(stoi(siteId), timestamp++);
+                transactionManager.recover_site(stoi(siteId), timestamp++);
                 if (printInput) cout << "Recover Site: " << siteId << endl;
                 break;
 
             case DUMP:
-                transactionManager.dumpSystemState();
+                transactionManager.dump_system_state();
                 if (printInput) cout << "Dump" << endl;
                 break;
 

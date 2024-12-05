@@ -14,31 +14,37 @@ public:
     //Singleton
     TransactionManager();
 
-    static int currentTimestamp;
-
     map<int, DataManager*> sites;
+
     map<int, Transaction*> transactions;
-    map<int, vector<Operation> > siteHistory;
+
+    map<int, vector<Operation> > site_history;
 
     vector<Transaction*> committed_txns;
+
     vector<Operation*> waiting_operations;
 
-// public:
-    static TransactionManager& getInstance();
+    static TransactionManager& get_instance();
 
-    Transaction* getTransaction(int transactionId);
+    Transaction* get_transaction(int transactionId);
 
     // Transaction lifecycle methods
-    void beginTransaction(int transactionId, int timestamp);
-    int readOperation(int transactionId, string variable, int timestamp);
-    void writeOperation(int transactionId, string variable, int value, int timestamp);
-    bool endTransaction(int transactionId, int timestamp);
+    void begin_transaction(int transactionId, int timestamp);
+
+    int read_operation(int transactionId, string variable, int timestamp);
+
+    void write_operation(int transactionId, string variable, int value, int timestamp);
+
+    bool end_transaction(int transactionId, int timestamp);
 
     // Site management
-    void failSite(int siteId, int timestamp);
-    void recoverSite(int siteId, int timestamp);
+    void fail_site(int siteId, int timestamp);
 
-    bool checkForCycle(vector<Transaction*> committedTransactions, Transaction* txn);
-    bool runAvailableCopiesCheck(Transaction* txn);
-    void dumpSystemState();
+    void recover_site(int siteId, int timestamp);
+
+    bool check_for_cycle(vector<Transaction*> committedTransactions, Transaction* txn);
+
+    bool run_available_copies_check(Transaction* txn);
+    
+    void dump_system_state();
 };

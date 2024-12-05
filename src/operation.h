@@ -27,5 +27,5 @@ public:
 
 };
 
-int extractTransactionId(const string& txIdStr);
-OperationType getOperationType(const string& command);
+int extract_transaction_id(const string& txIdStr);
+OperationType get_operation_type(const string& command);

@@ -6,7 +6,6 @@ public:
     int timestamp;
     int txnId;
 
-// public:
     ValueType() {
         value = 0;
         timestamp = 0;
@@ -17,29 +16,5 @@ public:
         value = val;
         timestamp = ts;
         txnId = txn;
-    }
-
-    int getValue() { 
-        return value; 
-    }
-
-    int getTimestamp() { 
-        return timestamp; 
-    }
-
-    int getTransactionId() { 
-        return txnId; 
-    }
-
-    void setValue(int val) { 
-        value = val; 
-    }
-
-    void setTimestamp(int ts) { 
-        timestamp = ts; 
-    }
-
-    void setTransactionId(int txn) { 
-        txnId = txn; 
     }
 };

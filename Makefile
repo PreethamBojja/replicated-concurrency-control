@@ -3,7 +3,7 @@
 CXX = g++
 CXXFLAGS = -std=c++11
 TARGET = main
-SRC = src/main.cpp
+SRC = src/*.cpp
 TESTS = $(shell ls test/* | sort -V) # Dynamically sorted in natural order
 
 # Default target: build the project
