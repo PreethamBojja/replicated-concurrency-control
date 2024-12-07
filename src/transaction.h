@@ -25,7 +25,7 @@ public:
     map<string, pair<int, ValueType> > var_access_map; // to maintain the first access details of each variable, used for SSI and Available Copies checks
     map<string, bool> is_written;  // keep track of the variables written by the txn, useful at commit time
     map<string, bool> is_read; // keep track of the variables read by the txn, useful for SSI pre-commit checks
-    map<Operation, vector<int> > active_sites_for_write_op;
+    map<Operation, vector<int> > active_sites_for_write_op;  // Tracks the active sites to write for an operation
     vector<Operation> past_operations; // past operations of this transaction 
     Operation* waiting_operation; // waiting operation
     map<string, int> current_state; // tracks current state of the transaction

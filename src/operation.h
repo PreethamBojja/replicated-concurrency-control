@@ -12,11 +12,11 @@ enum OperationType {
 
 class Operation {
 public:
-    OperationType op_type;
-    int transactionId;
-    string variable;
-    int value;
-    int timestamp;
+    OperationType op_type; // Type of operation
+    int transactionId; // ID of the transaction
+    string variable; // Target variable (for READ/WRITE operations)
+    int value; // Value to be written (for WRITE operations)
+    int timestamp; // Timestamp of the operation
 
     Operation(OperationType type, int tx_id, const string& var = "", int val = 0, int ts = 0)
         : op_type(type), transactionId(tx_id), variable(var), value(val), timestamp(ts) {}

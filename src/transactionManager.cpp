@@ -170,6 +170,7 @@ bool TransactionManager::end_transaction(int transactionId, int timestamp) {
             for (auto site_op : site_history[site_id]) {
                 if (site_op.op_type == OperationType::FAIL && site_op.timestamp > op_ts) {
                     is_commitable = false;
+                    txn->abort("Available copies check failed");
                     break;
                 }
             }
@@ -177,6 +178,7 @@ bool TransactionManager::end_transaction(int transactionId, int timestamp) {
             // first-committer advantage check
             DataManager *site = sites[site_id];
             if (site->values[variable].timestamp > txn->start_ts) {
+                txn->abort("First committer checks failed");
                 is_commitable = false;
             }
 
@@ -209,7 +211,6 @@ bool TransactionManager::end_transaction(int transactionId, int timestamp) {
 
         cout << "----- T" << transactionId << " committed" << endl;
     } else {
-        txn->abort("pre-commit checks failed");
         cout << "----- T" << transactionId << " aborted: " << txn->reason_4_abort << endl;
     }
 
@@ -391,10 +392,12 @@ bool TransactionManager::check_for_cycle(vector<Transaction*> c_txns, Transactio
     for (auto cycle : cycles) {
         for (int idx = 0; idx < cycle.size() - 1; idx++) {
             if (cycle[idx] == "rw" && cycle[idx + 1] == "rw") {
+                txn->abort("rw cycle checks failed");
                 return true;
             }
         }
         if (cycle[0] == "rw" && cycle[cycle.size() - 1] == "rw") {
+            txn->abort("rw cycle checks failed");
             return true;
         }
     }
