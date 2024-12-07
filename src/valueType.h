@@ -1,5 +1,6 @@
 #pragma once
 
+// Variable's value
 class ValueType {
 public:
     int value;

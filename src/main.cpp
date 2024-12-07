@@ -42,10 +42,8 @@ int main(int argc, char* argv[]) {
         if (!waiting_operations.empty()) {
             for (Operation* current_operation : waiting_operations) {
                 if (current_operation->op_type == OperationType::READ) {
-                    // cout << "Executing operation : T" << current_operation->transactionId << " read on " << current_operation->variable << endl;
                     int value = transactionManager.read_operation(current_operation->transactionId, current_operation->variable, timestamp++);
                 } else {
-                    // cout << "Executing operation : T" << current_operation->transactionId << " write on " << current_operation->variable << endl;
                     transactionManager.write_operation(current_operation->transactionId, current_operation->variable, current_operation->value, timestamp++);
                 }
             }

@@ -19,7 +19,6 @@ OperationType get_operation_type(const string& command) {
 }
 
 // Function to extract transaction ID from string
-// TODO :  Handle corner cases
 int extract_transaction_id(const string& txIdStr) {
     if (txIdStr.size() > 1 && txIdStr[0] == 'T') {
         try {

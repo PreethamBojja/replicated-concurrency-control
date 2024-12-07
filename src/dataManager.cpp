@@ -6,6 +6,7 @@
 
 using namespace std;
 
+// The DataManager class manages variable states, site status, and historical snapshots of data for a distributed database.
 DataManager::DataManager(int site_id){
     id = site_id;
     isUp = true;
@@ -25,10 +26,12 @@ DataManager::DataManager(int site_id){
     
 }
 
+// Checks if the site is up
 bool DataManager::is_site_up() {
     return isUp;
 }
 
+// Reads the value of a variable as of the given timestamp (transaction start time)
 ValueType DataManager::read(string variable, int at_ts) {
     ValueType result;
     vector<ValueType> snapshot = snapshots[variable];
@@ -41,12 +44,14 @@ ValueType DataManager::read(string variable, int at_ts) {
     return result;
 }
 
+// Commits the specified value of a variable to the site at the given timestamp
 void DataManager::commit(string var, ValueType value, int ts) {
     value.timestamp = ts;
     values[var] = value;
     take_snapshot(var);
 }
 
+// Captures the current state of the variable and stores it in historical snapshots
 void DataManager::take_snapshot(string variable) {
     snapshots[variable].push_back(values[variable]);
 }

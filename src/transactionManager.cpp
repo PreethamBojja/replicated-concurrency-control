@@ -97,7 +97,6 @@ int TransactionManager::read_operation(int transactionId, string variable, int t
             }
         }
     }
-    // cout << "read operation failed: " << transactionId << " " << variable << " at time " << timestamp << endl;
     if (!valid_site_exists) {
         txn->abort("no valid site for read " + variable);
         cout << "----- T" << transactionId << " aborted: " << txn->reason_4_abort << endl;
@@ -110,8 +109,7 @@ int TransactionManager::read_operation(int transactionId, string variable, int t
 }
 
 void TransactionManager::write_operation(int txn_id, string variable, int value, int timestamp) {
-    // just update the value in the txns local state
-    // write to all valid sites at commit time!
+    // just update the value in the txns local state, write to all valid sites at commit time!
     Transaction* txn = get_transaction(txn_id);
     if(stoi(variable.substr(1))%2 == 1) {
         int site_id = 1 + (stoi(variable.substr(1))%10);
@@ -192,12 +190,9 @@ bool TransactionManager::end_transaction(int transactionId, int timestamp) {
     }
 
     if (is_commitable) {
+        // checks for rw cycles
         is_commitable = !check_for_cycle(committed_txns, txn);
     }
-    // pre-commit checks go here:
-    //      1. available copies
-    //      2. first committer adv check
-    //      3. SSI checks
     if (is_commitable) {
         for (auto it : txn->active_sites_for_write_op) {
             string variable = it.first.variable;
@@ -222,14 +217,12 @@ bool TransactionManager::end_transaction(int transactionId, int timestamp) {
 }
 
 void TransactionManager::fail_site(int site_id, int timestamp){
-    // TODO: Implement fail 
     DataManager *site = sites[site_id];
     site_history[site_id].push_back(Operation(OperationType::FAIL, -1, "", 0, timestamp));
     site->isUp = false;
 }
 
 void TransactionManager::recover_site(int site_id, int timestamp){
-    // TODO: Implement recover
     DataManager* site = sites[site_id];
     site->isUp = true;
     site_history[site_id].push_back(Operation(OperationType::RECOVER, -1, "", -1, timestamp));
@@ -324,7 +317,6 @@ void dfs(map<int, vector<pair<int, string> > > &adj_list, map<int, bool> visited
 }
 
 bool TransactionManager::check_for_cycle(vector<Transaction*> c_txns, Transaction* txn) {
-    // TODO: Implement cycle detection in serialization graph
 
     vector<Transaction*> all_txns = c_txns;
     all_txns.push_back(txn);
@@ -332,19 +324,6 @@ bool TransactionManager::check_for_cycle(vector<Transaction*> c_txns, Transactio
     map<int, vector<pair<int, string> > > adj_list;
     for (auto txn : all_txns) {
         adj_list[txn->txnId] = {};
-        /** code to print out the adj list
-            cout << "txn: " << txn->txnId << endl;
-            cout << "start_ts: " << txn->start_ts << ", commit_ts: " << txn->commit_ts << endl;
-            cout << "write_set: ";
-            for (auto it : txn->is_written) {
-                if (it.second) cout << it.first << ", ";
-            } cout << endl;
-            cout << "read_set: ";
-            for (auto it : txn->is_read) {
-                if (it.second) cout << it.first << ", ";
-            } cout << endl;
-            cout << " -------------- " << endl;
-        */
     }
     for (int idx_i = 0; idx_i < all_txns.size(); idx_i++) {
         for (int idx_j = idx_i + 1; idx_j < all_txns.size(); idx_j++) {
@@ -399,14 +378,6 @@ bool TransactionManager::check_for_cycle(vector<Transaction*> c_txns, Transactio
         }
     }
 
-    // for (auto it : adj_list) {
-    //     cout << it.first << ": ";
-    //     for (auto node : it.second) {
-    //         cout << node.first << ", ";
-    //     } cout << endl;
-    // }
-    // cout << endl;
-
     // check for a cycle with adjacent "rw" edges
     map<int, bool> visited;
     vector<vector<string> > cycles;
@@ -429,9 +400,4 @@ bool TransactionManager::check_for_cycle(vector<Transaction*> c_txns, Transactio
     }
  
     return false;
-}
-
-bool TransactionManager::run_available_copies_check(Transaction* txn) {
-    // TODO: Implement available copies validation
-    return true;
 }
