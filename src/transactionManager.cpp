@@ -126,6 +126,7 @@ void TransactionManager::write_operation(int txn_id, string variable, int value,
     // record write operations of the txn
     // use brute force to get all available copies for
     /**
+        Excerpt from project description:
         Though I won’t require that you implement a distributed version of SSI, please use
         the abort rule for writes on the Available Copies algorithm anyway (if T
         writes to a site s and then s fails before T commits, then T should abort

@@ -30,11 +30,51 @@ public:
     Operation* waiting_operation; // waiting operation
     map<string, int> current_state; // tracks current state of the transaction
     
+    /*
+        Author : Sai Preetham Bojja
+        Description : Constructor for the Transaction class
+        Inputs : Transaction ID, Start time
+        Outputs : Null
+        Side Effects : Initializes the transaction object
+    */
     Transaction(int txnId, int startTime);
+
     // Core transaction operations
+
+    /*
+        Author : Sai Preetham Bojja
+        Description : Adds an operation to the transaction
+        Inputs : Operation object
+        Outputs : Null
+        Side Effects : Adds the operation to the transaction
+    */
     void add_operation(Operation op);
+
+    /*
+        Author : Sai Preetham Bojja
+        Description : Sets the waiting operation for the transaction
+        Inputs : Operation pointer
+        Outputs : Null
+        Side Effects : Sets the waiting operation for the transaction
+    */
     void set_waiting_operation(Operation* op);
+
+    /*
+        Author : Sai Preetham Bojja
+        Description : Commits the transaction
+        Inputs : Commit timestamp
+        Outputs : Null
+        Side Effects : Commits the transaction
+    */
     void commit(int timestamp);
+
+    /*
+        Author : Sai Preetham Bojja
+        Description : Aborts the transaction
+        Inputs : Reason for aborting
+        Outputs : Null
+        Side Effects : Aborts the transaction
+    */
     void abort(string reason);
 
 };
