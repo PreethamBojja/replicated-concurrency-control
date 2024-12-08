@@ -39,7 +39,7 @@ public:
         Author : Nikhil Kommineni
         Description : commits variable value to site
         Inputs : Variable name, variable value, Transaction start time
-        Side Effects : Updates the
+        Side Effects : updates value of variable at site
     */
     void commit(string variable, ValueType value, int commit_ts);
 
