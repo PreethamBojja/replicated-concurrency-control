@@ -2,6 +2,7 @@
 #include "operation.h"
 #include <iostream>
 #include <algorithm>
+#include <climits>
 
 Transaction::Transaction(int txnId, int startTime){
     this->txnId = txnId;
